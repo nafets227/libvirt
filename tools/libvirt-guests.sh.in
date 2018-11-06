@@ -41,8 +41,8 @@ CONNECT_RETRIES=10
 RETRIES_SLEEP=1
 SYNC_TIME=0
 
-test -f "$sysconfdir"/sysconfig/libvirt-guests &&
-    . "$sysconfdir"/sysconfig/libvirt-guests
+test -f "$sysconfdir"/conf.d/libvirt-guests &&
+    . "$sysconfdir"/conf.d/libvirt-guests
 
 LISTFILE="$localstatedir"/lib/libvirt/libvirt-guests
 VAR_SUBSYS_LIBVIRT_GUESTS="$localstatedir"/lock/subsys/libvirt-guests
