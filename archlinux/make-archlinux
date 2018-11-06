@@ -1,0 +1,69 @@
+#!/bin/bash
+#
+# make using options as in Arch Linux PKGBUILD
+
+##### copied from PKGBUILD
+makedepends=('lvm2' 'linux-api-headers' 'dnsmasq' 'lxc' 'libiscsi' 'open-iscsi'
+             'perl-xml-xpath' 'libxslt' 'qemu' 'parted' 'python')
+depends=('e2fsprogs' 'gnutls' 'iptables' 'libxml2' 'parted' 'polkit' 'avahi'
+         'yajl' 'libpciaccess' 'udev' 'dbus' 'libxau' 'libxdmcp' 'libpcap'
+         'libcap-ng' 'curl' 'libsasl' 'libgcrypt' 'libgpg-error' 'openssl'
+         'libxcb' 'gcc-libs' 'iproute2' 'libnl' 'libx11' 'numactl' 'gettext'
+         'libssh2' 'netcf' 'fuse2' 'glusterfs' 'ceph-libs' 'libiscsi')
+##### End of copied from PKGBUILD
+
+function build() {
+	##### copied from PKGBUILD
+	export PYTHON=$(command -v python)
+	export LDFLAGS=-lX11
+	export RADVD=/usr/bin/radvd
+	[ -f Makefile ] || ZFS=/usr/bin/zfs ZPOOL=/usr/bin/zpool ./configure \
+	    --prefix=/usr \
+	    --libexec=/usr/lib/"${pkgname}" \
+	    --sbindir=/usr/bin \
+	    --disable-static \
+	    --with-init-script=systemd \
+	    --with-qemu \
+	    --with-qemu-user=nobody \
+	    --with-qemu-group=kvm \
+	    --without-hal \
+	    --with-interface \
+	    --with-lxc \
+	    --with-netcf \
+	    --with-udev \
+	    --with-storage-disk \
+	    --with-storage-gluster \
+	    --with-storage-iscsi \
+	    --with-storage-lvm \
+	    --with-storage-zfs
+	##### end of copied from PKGBUILD
+}
+
+function old {
+sudo pacman -S --needed --noconfirm ${makedepends[*]} ${depends[*]} &&
+build &&
+make
+}
+
+VERSION="git_$(date +"%Y%m%d%H%M%S")"
+ROOTDIR=$(realpath $(dirname $BASH_SOURCE)/..)
+
+# INitialisew git repo of libvirt if not already done
+pushd $ROOTDIR >/dev/null
+if [ ! -f configure ] ; then
+       ./autogen.sh --prefix=$HOME/usr
+       rm Makefile # trigger configure from PKGBUILD
+fi
+popd >/dev/null
+
+pushd $ROOTDIR/archlinux >/dev/null
+svn co  svn://svn.archlinux.org/community/libvirt/trunk/ .
+sed \
+	-e "s:pkgver=\(.*\):pkgver=$VERSION:" \
+       	PKGBUILD >PKGBUILD.local
+[ -d src ] || mkdir src
+cp -a libvirtd.conf.d libvirtd-guests.conf.d libvirt.sysusers.d src/
+ln -s $ROOTDIR src/libvirt-$VERSION
+makepkg --noextract -p PKGBUILD.local
+#rm src/libvirt-$VERSION
+popd >/dev/null
