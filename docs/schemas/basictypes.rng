@@ -408,6 +408,7 @@
       <value>alpha</value>
       <value>armv6l</value>
       <value>armv7l</value>
+      <value>armv6l</value>
       <value>cris</value>
       <value>i686</value>
       <value>ia64</value>
